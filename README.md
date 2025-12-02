@@ -33,7 +33,7 @@ To let colleagues explore your current database for free, with edits that *appea
 
 1) Ensure your sqlite file (`oribasius.db`) has the data you want to show.  
 2) Set env vars when running:  
-   - `DATABASE_URL=sqlite:///oribasius.db` (or point to your bundled sqlite path)  
+   - `DATABASE_URL=sqlite:////opt/render/project/src/oribasius.db` on Render (use an absolute path); locally you can use `sqlite:///oribasius.db`.  
    - `DEMO_MODE=true` (commit calls flush for IDs then roll back; nothing is saved)  
 3) Start normally (e.g., `gunicorn app:app`). Users can add/edit/delete; after each request, changes are discarded.  
 

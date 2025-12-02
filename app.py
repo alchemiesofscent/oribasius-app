@@ -62,8 +62,10 @@ SCHOOL_COLORS = {
 }
 
 app = Flask(__name__)
-# Configurable DB URL; default to local sqlite file
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///oribasius.db')
+# Configurable DB URL; default to bundled sqlite file (absolute path for deploys)
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+default_sqlite = f"sqlite:///{os.path.join(BASE_DIR, 'oribasius.db')}"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or default_sqlite
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
 app.config['DEMO_MODE'] = os.environ.get('DEMO_MODE', 'false').lower() == 'true'

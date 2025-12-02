@@ -15,6 +15,7 @@ import shutil
 import tempfile
 from flask import Flask, render_template, request, jsonify, send_file, redirect
 from sqlalchemy.engine.url import make_url
+import logging
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from sqlalchemy import inspect, text
@@ -118,6 +119,20 @@ app.config['DEMO_MODE'] = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
 
 CORS(app)
 db = SQLAlchemy(app)
+
+# Log resolved DB info for debugging deploy environments
+def log_db_info(uri):
+    try:
+        url = make_url(uri)
+    except Exception:
+        logging.info("DB URI (raw): %s", uri)
+        return
+    logging.info("DB driver: %s", url.drivername)
+    logging.info("DB database: %s", url.database)
+    if url.drivername.startswith('sqlite') and url.database:
+        logging.info("SQLite file exists: %s", os.path.exists(url.database))
+        logging.info("SQLite dir writable: %s", os.access(os.path.dirname(url.database) or '.', os.W_OK))
+        logging.info("SQLite path: %s", url.database)
 
 # =============================================================================
 # DATABASE MODELS
@@ -1911,6 +1926,7 @@ def init_db():
         run_schema_migrations()
         bootstrap_source_authors()
         link_entries_to_source_authors()
+        log_db_info(app.config['SQLALCHEMY_DATABASE_URI'])
 
 
 init_db()

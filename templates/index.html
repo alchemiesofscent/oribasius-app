@@ -1,0 +1,2178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oribasius Collectiones Medicae</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --parchment: #f5f1e8;
+            --parchment-dark: #e8e0d0;
+            --ink: #2c1810;
+            --ink-light: #5c4030;
+            --vermillion: #c44536;
+            --gold: #b8860b;
+            --gold-light: #daa520;
+            --lapis: #1e3a5f;
+            --lapis-light: #2d5a87;
+            --verdigris: #40826d;
+            --shadow: rgba(44, 24, 16, 0.1);
+            --shadow-deep: rgba(44, 24, 16, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--parchment);
+            color: var(--ink);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(ellipse at 20% 0%, rgba(184, 134, 11, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(30, 58, 95, 0.05) 0%, transparent 50%);
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--lapis) 0%, var(--lapis-light) 100%);
+            color: var(--parchment);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px var(--shadow-deep);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: 2rem;
+            letter-spacing: 0.02em;
+        }
+
+        header p { font-weight: 300; opacity: 0.85; margin-top: 0.25rem; }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-actions { display: flex; gap: 0.75rem; }
+
+        .nav-tabs {
+            background: var(--parchment-dark);
+            border-bottom: 1px solid var(--shadow);
+            padding: 0 2rem;
+            position: sticky;
+            top: 88px;
+            z-index: 99;
+        }
+
+        .nav-tabs-inner {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            gap: 0;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--ink-light);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .nav-tab:hover { color: var(--ink); background: rgba(255,255,255,0.5); }
+        .nav-tab.active { color: var(--lapis); border-bottom-color: var(--gold); background: rgba(255,255,255,0.7); }
+
+        .main-container { max-width: 1600px; margin: 0 auto; padding: 2rem; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        body.panel-fullscreen-active { overflow: hidden; }
+
+        #panel-analytics.fullscreen {
+            position: fixed;
+            inset: 0;
+            background: var(--parchment);
+            padding: 2rem;
+            z-index: 200;
+            overflow-y: auto;
+        }
+
+        #panel-analytics.fullscreen .analytics-grid {
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        }
+
+        #panel-analytics.fullscreen .stat-card {
+            min-height: 320px;
+        }
+
+        #panel-analytics.fullscreen .chart-container {
+            height: 320px;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Source Sans 3', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary { background: var(--gold); color: white; }
+        .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(184, 134, 11, 0.3); }
+        .btn-secondary { background: var(--lapis); color: white; }
+        .btn-secondary:hover { background: var(--lapis-light); }
+        .btn-outline { background: transparent; border: 1.5px solid var(--ink-light); color: var(--ink); }
+        .btn-outline:hover { background: var(--ink); color: var(--parchment); }
+        .btn-danger { background: var(--vermillion); color: white; }
+        .btn-small { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+        .btn-verdigris { background: var(--verdigris); color: white; }
+
+        .filter-bar {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .filter-group { display: flex; flex-direction: column; gap: 0.35rem; }
+
+        .filter-group label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--ink-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 0.5rem 0.75rem;
+            border: 1.5px solid var(--parchment-dark);
+            border-radius: 4px;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.95rem;
+            background: var(--parchment);
+            min-width: 150px;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus { outline: none; border-color: var(--lapis); }
+
+        .search-input { flex: 1; min-width: 250px; }
+        .search-input input { width: 100%; }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; }
+
+        .entries-list { display: flex; flex-direction: column; gap: 1rem; }
+
+        .entry-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .entry-card:hover { box-shadow: 0 4px 16px var(--shadow-deep); }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 1rem 1.25rem;
+            background: linear-gradient(90deg, var(--parchment) 0%, white 100%);
+            border-bottom: 1px solid var(--parchment-dark);
+        }
+
+        .entry-meta { display: flex; flex-direction: column; gap: 0.25rem; }
+
+        .entry-location {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--lapis);
+            font-weight: 500;
+        }
+
+        .entry-author { font-size: 0.9rem; color: var(--ink-light); }
+        .entry-author strong { color: var(--ink); }
+
+        .entry-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+        .badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .badge-author-group { background: var(--lapis); color: white; }
+        .badge-sect { background: var(--verdigris); color: white; }
+        .badge-sect.uncertain { background: var(--verdigris); opacity: 0.7; }
+        .badge-words { background: var(--parchment-dark); color: var(--ink-light); }
+        .badge-ingredient { background: var(--gold); color: white; font-size: 0.7rem; }
+
+        .entry-body { padding: 1.25rem; }
+
+        .text-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .text-column h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--ink-light);
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--parchment-dark);
+        }
+
+        .greek-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.15rem;
+            line-height: 1.7;
+            color: var(--ink);
+        }
+
+        .translation-text {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1rem;
+            line-height: 1.65;
+            color: var(--ink-light);
+        }
+
+        .entry-footer {
+            padding: 0.75rem 1.25rem;
+            background: var(--parchment);
+            border-top: 1px solid var(--parchment-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .entry-urns {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--ink-light);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .entry-urns a { color: var(--lapis); text-decoration: none; }
+        .entry-urns a:hover { text-decoration: underline; }
+
+        .entry-actions { display: flex; gap: 0.5rem; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(44, 24, 16, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 1000px;
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(44, 24, 16, 0.3);
+        }
+
+        .modal.modal-view {
+            max-width: 1100px;
+        }
+
+        .view-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .view-section {
+            background: var(--parchment);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--parchment-dark);
+        }
+
+        .view-section h4 {
+            font-family: 'Cormorant Garamond', serif;
+            margin-bottom: 0.5rem;
+            color: var(--ink-light);
+        }
+
+        .view-text {
+            white-space: pre-wrap;
+            line-height: 1.65;
+            font-size: 1rem;
+        }
+
+        .view-text.greek { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            background: var(--lapis);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+        }
+
+        .modal-header h2 { font-family: 'Cormorant Garamond', serif; font-weight: 600; }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .modal-close:hover { opacity: 1; }
+
+        .modal-body { padding: 1.5rem; }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+        .form-group label { font-size: 0.85rem; font-weight: 500; color: var(--ink-light); }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 0.6rem 0.75rem;
+            border: 1.5px solid var(--parchment-dark);
+            border-radius: 4px;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.95rem;
+            background: white;
+        }
+
+        .form-group textarea { min-height: 120px; resize: vertical; }
+
+        .form-group textarea.greek-input {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.15rem;
+            line-height: 1.6;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus { outline: none; border-color: var(--lapis); }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            background: var(--parchment);
+            border-top: 1px solid var(--parchment-dark);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        /* Stats */
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--parchment-dark);
+            flex-wrap: wrap;
+        }
+
+        .stats-bar-item { display: flex; align-items: baseline; gap: 0.5rem; }
+        .stats-bar-item .value { font-size: 1.5rem; font-weight: 300; color: var(--lapis); }
+        .stats-bar-item .label { font-size: 0.85rem; color: var(--ink-light); }
+
+        /* Analytics */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .analytics-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .analytics-toolbar h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .stat-card h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--ink-light);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--parchment-dark);
+        }
+
+        .stat-big { font-size: 2.5rem; font-weight: 300; color: var(--lapis); line-height: 1; }
+        .stat-label { font-size: 0.9rem; color: var(--ink-light); margin-top: 0.25rem; }
+
+        .chart-container { height: 250px; position: relative; }
+        .chart-container.tall { height: 380px; }
+
+        /* Book map */
+        .book-map { display: flex; flex-direction: column; gap: 0.5rem; }
+        .book-row { display: flex; align-items: center; gap: 0.5rem; }
+        .book-label { width: 70px; font-weight: 600; color: var(--ink-light); }
+        .chapter-strip { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+        .chapter-block {
+            width: 14px;
+            height: 24px;
+            border-radius: 3px;
+            cursor: pointer;
+            border: 1px solid rgba(44, 24, 16, 0.08);
+            transition: transform 0.1s ease;
+        }
+        .chapter-block:hover { transform: translateY(-2px); box-shadow: 0 4px 8px var(--shadow); }
+        .book-map-legend { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+        .legend-item { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.5rem; background: var(--parchment); border: 1px solid var(--parchment-dark); border-radius: 4px; }
+        .legend-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--parchment-dark);
+        }
+
+        .data-table th {
+            background: var(--parchment);
+            font-weight: 500;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--ink-light);
+        }
+
+        .data-table tr:hover { background: var(--parchment); }
+
+        .data-table .greek { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; }
+
+        /* Tags */
+        .tag-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            background: var(--parchment-dark);
+            border-radius: 3px;
+            font-size: 0.85rem;
+        }
+
+        .tag-remove {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--ink-light);
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .tag-remove:hover { color: var(--vermillion); }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1100;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            padding: 1rem 1.25rem;
+            background: var(--ink);
+            color: white;
+            border-radius: 6px;
+            box-shadow: 0 4px 20px var(--shadow-deep);
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success { background: var(--verdigris); }
+        .toast.error { background: var(--vermillion); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Import */
+        .import-section {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            text-align: center;
+        }
+
+        .import-dropzone {
+            border: 2px dashed var(--parchment-dark);
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            margin: 1.5rem 0;
+            transition: all 0.2s ease;
+        }
+
+        .import-dropzone:hover,
+        .import-dropzone.dragover {
+            border-color: var(--lapis);
+            background: rgba(30, 58, 95, 0.05);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content { flex-direction: column; gap: 1rem; }
+            .text-columns { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div>
+                <h1>Oribasius · Collectiones Medicae</h1>
+                <p>Collaborative Scholarly Database</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-outline" onclick="exportCSV()">Export CSV</button>
+                <button class="btn btn-primary" onclick="openNewEntryModal()">+ New Entry</button>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav-tabs">
+        <div class="nav-tabs-inner">
+            <button class="nav-tab active" data-panel="browse">Browse & Edit</button>
+            <button class="nav-tab" data-panel="authors">Source Authors</button>
+            <button class="nav-tab" data-panel="ingredients">Ingredients</button>
+            <button class="nav-tab" data-panel="analytics">Analytics</button>
+            <button class="nav-tab" data-panel="structure">Structure</button>
+            <button class="nav-tab" data-panel="import">Import</button>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        <!-- Browse Panel -->
+        <section id="panel-browse" class="panel active">
+            <div class="stats-bar">
+                <div class="stats-bar-item">
+                    <span class="value" id="stat-entries">-</span>
+                    <span class="label">entries</span>
+                </div>
+                <div class="stats-bar-item">
+                    <span class="value" id="stat-words">-</span>
+                    <span class="label">Greek words</span>
+                </div>
+                <div class="stats-bar-item">
+                    <span class="value" id="stat-authors">-</span>
+                    <span class="label">source authors</span>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>Source Author</label>
+                    <select id="filter-source-author">
+                        <option value="">All Authors</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Medical Sect</label>
+                    <select id="filter-sect">
+                        <option value="">All Sects</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Book</label>
+                    <select id="filter-book">
+                        <option value="">All Books</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Ingredient</label>
+                    <select id="filter-ingredient">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="filter-group search-input">
+                    <label>Search Greek / English</label>
+                    <input type="text" id="filter-search" placeholder="πῦρ, wheat, etc.">
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="lemma-search">
+                        <label for="lemma-search" style="text-transform: none; font-size: 0.9rem;">Lemmatized search</label>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="loadEntries()">Search</button>
+            </div>
+
+            <div class="entries-list" id="entries-list"></div>
+        </section>
+
+        <!-- Authors Panel -->
+        <section id="panel-authors" class="panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem;">Source Authors</h2>
+                <button class="btn btn-primary" onclick="openNewAuthorModal()">+ New Author</button>
+            </div>
+            <table class="data-table" id="authors-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Greek</th>
+                        <th>Medical Sect</th>
+                        <th>Floruit</th>
+                        <th>Entries</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <!-- Ingredients Panel -->
+        <section id="panel-ingredients" class="panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem;">Ingredients & Substances</h2>
+                <button class="btn btn-primary" onclick="openNewIngredientModal()">+ New Ingredient</button>
+            </div>
+            <div class="filter-bar" style="margin-bottom: 1rem;">
+                <div class="filter-group">
+                    <label>Category</label>
+                    <select id="ingredient-category-filter" onchange="loadIngredients()">
+                        <option value="">All Categories</option>
+                        <option value="plant">Plant</option>
+                        <option value="animal">Animal</option>
+                        <option value="mineral">Mineral</option>
+                        <option value="compound">Compound</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="filter-group search-input">
+                    <label>Search</label>
+                    <input type="text" id="ingredient-search" placeholder="Search ingredients..." onkeypress="if(event.key==='Enter')loadIngredients()">
+                </div>
+                <button class="btn btn-secondary" onclick="loadIngredients()">Search</button>
+            </div>
+            <table class="data-table" id="ingredients-table">
+                <thead>
+                    <tr>
+                        <th>Greek</th>
+                        <th>Latin</th>
+                        <th>English</th>
+                        <th>Category</th>
+                        <th>Dioscorides</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <!-- Analytics Panel -->
+        <section id="panel-analytics" class="panel">
+            <div class="analytics-toolbar">
+                <div>
+                    <h2>Analytics Dashboard</h2>
+                    <p style="color: var(--ink-light); font-size: 0.95rem;">Explore corpus metrics and ingredient trends</p>
+                </div>
+                <button class="btn btn-outline btn-small" id="analytics-fullscreen-btn">Maximize</button>
+            </div>
+            <div class="analytics-grid">
+                <div class="stat-card">
+                    <h3>Corpus Overview</h3>
+                    <div class="stat-big" id="analytics-total-words">-</div>
+                    <div class="stat-label">Total Greek Words</div>
+                    <div style="margin-top: 1rem;">
+                        <div class="stat-big" style="font-size: 1.5rem;" id="analytics-total-entries">-</div>
+                        <div class="stat-label">Total Entries</div>
+                    </div>
+                </div>
+                <div class="stat-card" style="grid-column: span 2;">
+                    <h3>Source Author Distribution by Book/Chapter</h3>
+                    <div id="book-map" class="book-map"></div>
+                    <div id="book-map-legend" class="book-map-legend"></div>
+                </div>
+                <div class="stat-card">
+                    <h3>Words by Source Author</h3>
+                    <div class="chart-container tall"><canvas id="chart-authors"></canvas></div>
+                </div>
+                <div class="stat-card">
+                    <h3>Words by Medical Sect</h3>
+                    <div class="chart-container"><canvas id="chart-sects"></canvas></div>
+                </div>
+                <div class="stat-card">
+                    <h3>Distribution by Book</h3>
+                    <div class="chart-container"><canvas id="chart-books"></canvas></div>
+                </div>
+                <div class="stat-card">
+                    <h3>Top Ingredients</h3>
+                    <div class="chart-container"><canvas id="chart-ingredients"></canvas></div>
+                </div>
+                <div class="stat-card">
+                    <h3>Top Greek Words</h3>
+                    <div style="max-height: 250px; overflow-y: auto;" id="word-freq-container"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Structure Panel -->
+        <section id="panel-structure" class="panel">
+            <div class="analytics-toolbar">
+                <div>
+                    <h2>Thematic Structure</h2>
+                    <p style="color: var(--ink-light); font-size: 0.95rem;">Explore the Four-Fold Division and source distribution</p>
+                </div>
+                <button class="btn btn-primary btn-small" onclick="seedThematicData()">Seed Structure Data</button>
+            </div>
+
+            <div style="margin: 1.5rem 0; padding: 1rem; background: rgba(255,255,255,0.5); border-radius: 8px; display: flex; align-items: center; gap: 1.5rem;">
+                <span style="font-weight: 500;">Color by:</span>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="radio" name="structure-mode" value="school" checked onchange="loadThematicMap()">
+                    <span>Medical School</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="radio" name="structure-mode" value="author" onchange="loadThematicMap()">
+                    <span>Major Author</span>
+                </label>
+            </div>
+
+            <div id="structure-legend" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;"></div>
+
+            <div id="thematic-tree" style="margin-top: 1rem;"></div>
+        </section>
+
+        <!-- Import Panel -->
+        <section id="panel-import" class="panel">
+            <div class="import-section">
+                <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem;">Import CSV Data</h3>
+                <div class="import-dropzone" id="import-dropzone">
+                    <p style="color: var(--ink-light);">Drag and drop your CSV file here, or</p>
+                    <input type="file" id="import-file" accept=".csv" style="display: none;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Choose File</button>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+                    <button class="btn btn-outline" onclick="reindexLemmas()">Rebuild Lemma Index</button>
+                    <button class="btn btn-outline" onclick="generateAllURNs()">Generate All URNs</button>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-danger" onclick="clearDatabase('entries')">Clear Entries</button>
+                    <button class="btn btn-danger" onclick="clearDatabase('all')">Clear Entire Database</button>
+                </div>
+                <p style="text-align: center; color: var(--vermillion); margin-top: 0.5rem; font-size: 0.9rem;">Type <strong>RESET</strong> when prompted to confirm destructive actions.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Entry Edit Modal -->
+    <div class="modal-overlay" id="edit-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Edit Entry</h2>
+                <button class="modal-close" onclick="closeModal('edit-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-id">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Author Named (in text)</label>
+                        <input type="text" id="edit-author-named">
+                    </div>
+                    <div class="form-group">
+                        <label>Source Author</label>
+                        <select id="edit-source-author"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Author Group (legacy)</label>
+                        <input type="text" id="edit-author-group">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Book</label>
+                        <input type="number" id="edit-book">
+                    </div>
+                    <div class="form-group">
+                        <label>Chapter</label>
+                        <input type="number" id="edit-chapter">
+                    </div>
+                    <div class="form-group">
+                        <label>Chapter Title / Label</label>
+                        <input type="text" id="edit-chapter-title" placeholder="Proem, Preface, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label>Section</label>
+                        <input type="number" id="edit-section">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Raeder Volume</label>
+                        <input type="text" id="edit-raeder-volume" placeholder="e.g., VI.1.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Raeder Page</label>
+                        <input type="number" id="edit-raeder-page">
+                    </div>
+                    <div class="form-group">
+                        <label>Line Start</label>
+                        <input type="number" id="edit-raeder-line-start">
+                    </div>
+                    <div class="form-group">
+                        <label>Line End</label>
+                        <input type="number" id="edit-raeder-line-end">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Title (Greek)</label>
+                    <input type="text" id="edit-title-greek" class="greek-input" style="font-family: 'Cormorant Garamond', serif; font-size: 1.15rem;">
+                </div>
+
+                <div class="form-group">
+                    <label>Body (Greek)</label>
+                    <textarea id="edit-body-greek" class="greek-input"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Translation Title</label>
+                    <input type="text" id="edit-translation-title">
+                </div>
+
+                <div class="form-group">
+                    <label>Translation</label>
+                    <textarea id="edit-translation-content"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Ingredients</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <select id="edit-ingredient-select" style="flex: 1;"></select>
+                        <button class="btn btn-small btn-verdigris" onclick="addIngredientToEntry()">Add</button>
+                    </div>
+                    <div class="tag-list" id="entry-ingredients-list"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Note 1</label>
+                        <textarea id="edit-note1" style="min-height: 60px;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Note 2</label>
+                        <textarea id="edit-note2" style="min-height: 60px;"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('edit-modal')">Cancel</button>
+                <button class="btn btn-danger" id="delete-btn" onclick="deleteEntry()" style="display: none;">Delete</button>
+                <button class="btn btn-primary" onclick="saveEntry()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entry View Modal -->
+    <div class="modal-overlay" id="view-modal">
+        <div class="modal modal-view">
+            <div class="modal-header">
+                <h2 id="view-modal-title">Entry Details</h2>
+                <button class="modal-close" onclick="closeModal('view-modal')">&times;</button>
+            </div>
+            <div class="modal-body" id="view-modal-body"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('view-modal')">Close</button>
+                <button class="btn btn-primary" onclick="openEditFromView()">Edit This Entry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Author Modal -->
+    <div class="modal-overlay" id="author-modal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="author-modal-title">New Author</h2>
+                <button class="modal-close" onclick="closeModal('author-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="author-id">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="author-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Greek Name</label>
+                    <input type="text" id="author-name-greek" style="font-family: 'Cormorant Garamond', serif; font-size: 1.15rem;">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Medical Sect</label>
+                        <select id="author-sect">
+                            <option value="">Unknown</option>
+                            <option value="Pneumatist">Pneumatist</option>
+                            <option value="Methodist">Methodist</option>
+                            <option value="Empiricist">Empiricist</option>
+                            <option value="Rationalist">Rationalist</option>
+                            <option value="Dogmatist">Dogmatist</option>
+                            <option value="Eclectic">Eclectic</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="author-sect-certain" checked>
+                            <label for="author-sect-certain" style="text-transform: none; font-size: 0.9rem;">Sect attribution certain</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Floruit</label>
+                        <input type="text" id="author-floruit" placeholder="e.g., 2nd c. CE">
+                    </div>
+                    <div class="form-group">
+                        <label>TLG ID</label>
+                        <input type="text" id="author-tlg" placeholder="e.g., 0057">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="author-notes" style="min-height: 80px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('author-modal')">Cancel</button>
+                <button class="btn btn-danger" id="delete-author-btn" onclick="deleteAuthor()" style="display: none;">Delete</button>
+                <button class="btn btn-primary" onclick="saveAuthor()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ingredient Modal -->
+    <div class="modal-overlay" id="ingredient-modal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="ingredient-modal-title">New Ingredient</h2>
+                <button class="modal-close" onclick="closeModal('ingredient-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="ingredient-id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Greek Name</label>
+                        <input type="text" id="ingredient-greek" style="font-family: 'Cormorant Garamond', serif; font-size: 1.15rem;" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Latin Name</label>
+                        <input type="text" id="ingredient-latin">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>English Name</label>
+                        <input type="text" id="ingredient-english">
+                    </div>
+                    <div class="form-group">
+                        <label>Modern Identification</label>
+                        <input type="text" id="ingredient-modern" placeholder="Botanical/chemical name">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="ingredient-category">
+                            <option value="">Select...</option>
+                            <option value="plant">Plant</option>
+                            <option value="animal">Animal</option>
+                            <option value="mineral">Mineral</option>
+                            <option value="compound">Compound</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Subcategory</label>
+                        <input type="text" id="ingredient-subcategory" placeholder="resin, root, seed, oil...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Dioscorides Reference</label>
+                    <input type="text" id="ingredient-dioscorides" placeholder="e.g., 1.24">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="ingredient-notes" style="min-height: 80px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('ingredient-modal')">Cancel</button>
+                <button class="btn btn-danger" id="delete-ingredient-btn" onclick="deleteIngredient()" style="display: none;">Delete</button>
+                <button class="btn btn-primary" onclick="saveIngredient()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        // State
+        let entries = [];
+        let filters = {};
+        let authors = [];
+        let ingredients = [];
+        let charts = {};
+        let currentEntryIngredients = [];
+        let viewingEntryId = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFilters();
+            loadEntries();
+            loadAuthors();
+            loadIngredients();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    if (tab.dataset.panel !== 'analytics') closeAnalyticsFullscreen();
+                    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(`panel-${tab.dataset.panel}`).classList.add('active');
+                    if (tab.dataset.panel === 'analytics') loadAnalytics();
+                });
+            });
+
+            const analyticsBtn = document.getElementById('analytics-fullscreen-btn');
+            if (analyticsBtn) analyticsBtn.addEventListener('click', toggleAnalyticsFullscreen);
+
+            document.getElementById('filter-search').addEventListener('keypress', e => {
+                if (e.key === 'Enter') loadEntries();
+            });
+
+            // Import drag/drop
+            const dropzone = document.getElementById('import-dropzone');
+            const fileInput = document.getElementById('import-file');
+            dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+            dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+            dropzone.addEventListener('drop', e => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                if (e.dataTransfer.files[0]) importFile(e.dataTransfer.files[0]);
+            });
+            fileInput.addEventListener('change', e => { if (e.target.files[0]) importFile(e.target.files[0]); });
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeAnalyticsFullscreen();
+                closeModal('view-modal');
+            }
+        });
+
+        async function loadFilters() {
+            try {
+                const resp = await fetch('/api/filters');
+                filters = await resp.json();
+
+                const sourceAuthorSelect = document.getElementById('filter-source-author');
+                const editSourceAuthorSelect = document.getElementById('edit-source-author');
+                sourceAuthorSelect.innerHTML = '<option value="">All Authors</option>';
+                editSourceAuthorSelect.innerHTML = '<option value="">-- Select --</option>';
+                const sourceAuthorList = filters.source_authors || [];
+                sourceAuthorList.forEach(a => {
+                    sourceAuthorSelect.innerHTML += `<option value="${a.id}" data-mode="source">${a.name}${a.sect ? ` (${a.sect})` : ''}</option>`;
+                    editSourceAuthorSelect.innerHTML += `<option value="${a.id}">${a.name}</option>`;
+                });
+                if (sourceAuthorList.length === 0 && (filters.authors || []).length) {
+                    (filters.authors || []).forEach(name => {
+                        sourceAuthorSelect.innerHTML += `<option value="${name}" data-mode="legacy">${name}</option>`;
+                    });
+                }
+
+                const sectSelect = document.getElementById('filter-sect');
+                sectSelect.innerHTML = '<option value="">All Sects</option>';
+                if ((filters.sects || []).length) {
+                    sectSelect.dataset.mode = 'source';
+                    filters.sects.forEach(s => {
+                        sectSelect.innerHTML += `<option value="${s}">${s}</option>`;
+                    });
+                } else if ((filters.pneumatists || []).length) {
+                    sectSelect.dataset.mode = 'legacy';
+                    filters.pneumatists.forEach(s => {
+                        const label = s || 'Unknown';
+                        sectSelect.innerHTML += `<option value="${label}">${label}</option>`;
+                    });
+                } else {
+                    sectSelect.dataset.mode = 'source';
+                }
+
+                const bookSelect = document.getElementById('filter-book');
+                bookSelect.innerHTML = '<option value="">All Books</option>';
+                (filters.books || []).forEach(b => {
+                    bookSelect.innerHTML += `<option value="${b}">Book ${b}</option>`;
+                });
+
+                // Load ingredients for filter
+                const ingResp = await fetch('/api/ingredients');
+                ingredients = await ingResp.json();
+                const ingredientSelect = document.getElementById('filter-ingredient');
+                const editIngredientSelect = document.getElementById('edit-ingredient-select');
+                ingredientSelect.innerHTML = '<option value="">All</option>';
+                editIngredientSelect.innerHTML = '<option value="">-- Select ingredient --</option>';
+                ingredients.forEach(i => {
+                    const label = i.name_greek + (i.name_english ? ` (${i.name_english})` : '');
+                    ingredientSelect.innerHTML += `<option value="${i.id}">${label}</option>`;
+                    editIngredientSelect.innerHTML += `<option value="${i.id}">${label}</option>`;
+                });
+            } catch (err) {
+                console.error('Error loading filters:', err);
+            }
+        }
+
+        async function loadEntries() {
+            const params = new URLSearchParams();
+            const sourceAuthorSelect = document.getElementById('filter-source-author');
+            const selectedAuthorOption = sourceAuthorSelect ? sourceAuthorSelect.options[sourceAuthorSelect.selectedIndex] : null;
+            const sectSelect = document.getElementById('filter-sect');
+            const sect = sectSelect.value;
+            const book = document.getElementById('filter-book').value;
+            const ingredient = document.getElementById('filter-ingredient').value;
+            const search = document.getElementById('filter-search').value;
+            const lemmaSearch = document.getElementById('lemma-search').checked;
+
+            if (selectedAuthorOption && selectedAuthorOption.value) {
+                if (selectedAuthorOption.dataset.mode === 'legacy') {
+                    params.append('author', selectedAuthorOption.value);
+                } else {
+                    params.append('source_author_id', selectedAuthorOption.value);
+                }
+            }
+            if (sect) {
+                if (sectSelect.dataset.mode === 'legacy') {
+                    params.append('pneumatist', sect);
+                } else {
+                    params.append('sect', sect);
+                }
+            }
+            if (book) params.append('book', book);
+            if (ingredient) params.append('ingredient_id', ingredient);
+            if (search) params.append('search', search);
+            if (lemmaSearch) params.append('lemma_search', 'true');
+            params.append('include_ingredients', 'true');
+
+            try {
+                const resp = await fetch(`/api/entries?${params}`);
+                entries = await resp.json();
+                renderEntries();
+                updateStatsBar();
+            } catch (err) {
+                console.error('Error loading entries:', err);
+                showToast('Failed to load entries', 'error');
+            }
+        }
+
+        function renderEntries() {
+            const container = document.getElementById('entries-list');
+            if (entries.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 3rem; color: var(--ink-light);"><p>No entries found.</p></div>';
+                return;
+            }
+
+            container.innerHTML = entries.map(e => {
+                const author = e.source_author;
+                const sectBadge = author?.sect 
+                    ? `<span class="badge badge-sect ${!author.sect_certain ? 'uncertain' : ''}">${author.sect}${!author.sect_certain ? '?' : ''}</span>` 
+                    : '';
+                const ingredientBadges = (e.ingredients || []).slice(0, 3).map(i => 
+                    `<span class="badge badge-ingredient">${i.name_greek}</span>`
+                ).join('') + (e.ingredients?.length > 3 ? `<span class="badge badge-ingredient">+${e.ingredients.length - 3}</span>` : '');
+
+                return `
+                <div class="entry-card" id="entry-${e.id}">
+                    <div class="entry-header">
+                        <div class="entry-meta">
+                            <span class="entry-location">${formatEntryLocation(e)}</span>
+                            <span class="entry-author">
+                                ${e.author_named ? `<strong>${e.author_named}</strong> · ` : ''}
+                                Source: ${author?.name || e.author || 'Unknown'}
+                            </span>
+                        </div>
+                        <div class="entry-badges">
+                            ${e.author_group ? `<span class="badge badge-author-group">${e.author_group}</span>` : ''}
+                            ${sectBadge}
+                            <span class="badge badge-words">${e.word_count || 0} words</span>
+                            ${ingredientBadges}
+                        </div>
+                    </div>
+                    <div class="entry-body">
+                        <div class="text-columns">
+                            <div class="text-column">
+                                <h3>Greek Text</h3>
+                                <div class="greek-text">
+                                    ${e.title_greek ? `<strong>${e.title_greek}</strong><br><br>` : ''}
+                                    ${truncate(e.body_greek, 500)}
+                                </div>
+                            </div>
+                            <div class="text-column">
+                                <h3>Translation</h3>
+                                <div class="translation-text">
+                                    ${e.translation_title ? `<strong>${e.translation_title}</strong><br><br>` : ''}
+                                    ${truncate(e.translation_content, 500)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="entry-footer">
+                        <div class="entry-urns">
+                            ${e.urn_cts ? `<span>CTS: ${e.urn_cts}</span>` : ''}
+                            ${e.urn_raeder ? `<span>Raeder: ${e.urn_raeder}</span>` : ''}
+                            ${!e.urn_cts && !e.urn_raeder ? '<button class="btn btn-small btn-outline" onclick="generateURN(' + e.id + ')">Generate URNs</button>' : ''}
+                        </div>
+                        <div class="entry-actions">
+                            <button class="btn btn-small btn-outline" onclick="viewEntry(${e.id})">View</button>
+                            <button class="btn btn-small btn-primary" onclick="editEntry(${e.id})">Edit</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function truncate(text, max) {
+            if (!text) return '<em style="color: var(--ink-light);">No content</em>';
+            return text.length <= max ? text : text.substring(0, max) + '...';
+        }
+
+        function viewEntry(id) {
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+            viewingEntryId = id;
+            const title = entry.author_named ? `${entry.author_named} – ${formatEntryLocation(entry)}` : `Entry ${entry.id}`;
+            document.getElementById('view-modal-title').textContent = title;
+            document.getElementById('view-modal-body').innerHTML = buildViewModalContent(entry);
+            document.getElementById('view-modal').classList.add('active');
+        }
+
+        function buildViewModalContent(entry) {
+            const sourceAuthor = entry.source_author;
+            const sectLabel = sourceAuthor?.sect ? `${sourceAuthor.sect}${sourceAuthor.sect_certain === false ? '?' : ''}` : (entry.pneumatist || 'Unknown');
+            const ingredientList = (entry.ingredients || []).map(i => i.name_greek + (i.name_english ? ` (${i.name_english})` : '')).join(', ');
+            const notes = [entry.note1, entry.note2, entry.note3, entry.note4].filter(Boolean).join('<br><br>');
+            const themes = (entry.themes || []).join(', ');
+            const urnLines = [];
+            if (entry.urn_cts) urnLines.push(`CTS: ${entry.urn_cts}`);
+            if (entry.urn_raeder) urnLines.push(`Raeder: ${entry.urn_raeder}`);
+            const urnDisplay = urnLines.length ? urnLines.join('<br>') : '—';
+
+            return `
+                <div class="view-grid">
+                    <div class="view-section">
+                        <h4>Location</h4>
+                        <div>${formatEntryLocation(entry)}</div>
+                    </div>
+                    <div class="view-section">
+                        <h4>Source Author</h4>
+                        <div>${sourceAuthor?.name || entry.author || 'Unknown'}${sectLabel ? ` · ${sectLabel}` : ''}</div>
+                    </div>
+                    <div class="view-section">
+                        <h4>Word Count</h4>
+                        <div>${(entry.word_count || 0).toLocaleString()}</div>
+                    </div>
+                    <div class="view-section">
+                        <h4>URNs</h4>
+                        <div>${urnDisplay}</div>
+                    </div>
+                    <div class="view-section">
+                        <h4>Ingredients</h4>
+                        <div>${ingredientList || '<em>None</em>'}</div>
+                    </div>
+                    <div class="view-section">
+                        <h4>Themes</h4>
+                        <div>${themes || '<em>None</em>'}</div>
+                    </div>
+                </div>
+                <div class="view-section">
+                    <h4>Greek Text</h4>
+                    <div class="view-text greek">${entry.title_greek ? `<strong>${entry.title_greek}</strong><br><br>` : ''}${entry.body_greek || '<em>No Greek text</em>'}</div>
+                </div>
+                <div class="view-section">
+                    <h4>Translation</h4>
+                    <div class="view-text">${entry.translation_title ? `<strong>${entry.translation_title}</strong><br><br>` : ''}${entry.translation_content || '<em>No translation</em>'}</div>
+                </div>
+                <div class="view-section">
+                    <h4>Notes</h4>
+                    <div class="view-text">${notes || '<em>No notes</em>'}</div>
+                </div>
+            `;
+        }
+
+        function openEditFromView() {
+            if (!viewingEntryId) return;
+            const id = viewingEntryId;
+            viewingEntryId = null;
+            closeModal('view-modal');
+            editEntry(id);
+        }
+
+        function getChapterLabel(entry) {
+            const hasNumber = entry.chapter !== null && entry.chapter !== undefined && entry.chapter !== '';
+            if (entry.chapter_title && hasNumber) {
+                return `${entry.chapter_title} (${entry.chapter})`;
+            }
+            if (entry.chapter_title) return entry.chapter_title;
+            if (hasNumber) return entry.chapter;
+            return '?';
+        }
+
+        function formatEntryLocation(entry) {
+            const parts = [`Book ${entry.book || '?'}`];
+            const chapterLabel = getChapterLabel(entry);
+            if (chapterLabel) parts.push(`Ch. ${chapterLabel}`);
+            if (entry.section) parts.push(`§ ${entry.section}`);
+            return parts.join(', ');
+        }
+
+        function updateStatsBar() {
+            document.getElementById('stat-entries').textContent = entries.length.toLocaleString();
+            const totalWords = entries.reduce((sum, e) => sum + (e.word_count || 0), 0);
+            document.getElementById('stat-words').textContent = totalWords.toLocaleString();
+            const uniqueAuthors = new Set(entries.map(e => e.source_author?.name || e.author).filter(a => a));
+            document.getElementById('stat-authors').textContent = uniqueAuthors.size;
+        }
+
+        // Entry CRUD
+        function editEntry(id) {
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+
+            document.getElementById('modal-title').textContent = 'Edit Entry';
+            document.getElementById('delete-btn').style.display = 'inline-flex';
+            document.getElementById('edit-id').value = entry.id;
+            document.getElementById('edit-author-named').value = entry.author_named || '';
+            document.getElementById('edit-source-author').value = entry.source_author_id || '';
+            document.getElementById('edit-author-group').value = entry.author_group || '';
+            document.getElementById('edit-book').value = entry.book || '';
+            document.getElementById('edit-chapter').value = entry.chapter || '';
+            document.getElementById('edit-chapter-title').value = entry.chapter_title || '';
+            document.getElementById('edit-section').value = entry.section || '';
+            document.getElementById('edit-raeder-volume').value = entry.raeder_volume || '';
+            document.getElementById('edit-raeder-page').value = entry.raeder_page || '';
+            document.getElementById('edit-raeder-line-start').value = entry.raeder_line_start || '';
+            document.getElementById('edit-raeder-line-end').value = entry.raeder_line_end || '';
+            document.getElementById('edit-title-greek').value = entry.title_greek || '';
+            document.getElementById('edit-body-greek').value = entry.body_greek || '';
+            document.getElementById('edit-translation-title').value = entry.translation_title || '';
+            document.getElementById('edit-translation-content').value = entry.translation_content || '';
+            document.getElementById('edit-note1').value = entry.note1 || '';
+            document.getElementById('edit-note2').value = entry.note2 || '';
+
+            currentEntryIngredients = entry.ingredients || [];
+            renderEntryIngredients();
+            document.getElementById('edit-modal').classList.add('active');
+        }
+
+        function openNewEntryModal() {
+            document.getElementById('modal-title').textContent = 'New Entry';
+            document.getElementById('delete-btn').style.display = 'none';
+            document.getElementById('edit-id').value = '';
+            ['author-named', 'source-author', 'author-group', 'book', 'chapter', 'chapter-title', 'section',
+             'raeder-volume', 'raeder-page', 'raeder-line-start', 'raeder-line-end',
+             'title-greek', 'body-greek', 'translation-title', 'translation-content', 'note1', 'note2'
+            ].forEach(f => { 
+                const el = document.getElementById(`edit-${f}`);
+                if (el) el.value = '';
+            });
+            currentEntryIngredients = [];
+            renderEntryIngredients();
+            document.getElementById('edit-modal').classList.add('active');
+        }
+
+        function renderEntryIngredients() {
+            const container = document.getElementById('entry-ingredients-list');
+            container.innerHTML = currentEntryIngredients.map(i => `
+                <span class="tag">
+                    ${i.name_greek}
+                    <button class="tag-remove" onclick="removeIngredientFromEntry(${i.id})">&times;</button>
+                </span>
+            `).join('');
+        }
+
+        function addIngredientToEntry() {
+            const select = document.getElementById('edit-ingredient-select');
+            const id = parseInt(select.value);
+            if (!id) return;
+            const ingredient = ingredients.find(i => i.id === id);
+            if (ingredient && !currentEntryIngredients.find(i => i.id === id)) {
+                currentEntryIngredients.push(ingredient);
+                renderEntryIngredients();
+            }
+        }
+
+        function removeIngredientFromEntry(id) {
+            currentEntryIngredients = currentEntryIngredients.filter(i => i.id !== id);
+            renderEntryIngredients();
+        }
+
+        async function saveEntry() {
+            const id = document.getElementById('edit-id').value;
+            const data = {
+                author_named: document.getElementById('edit-author-named').value,
+                source_author_id: parseInt(document.getElementById('edit-source-author').value) || null,
+                author_group: document.getElementById('edit-author-group').value,
+                book: parseInt(document.getElementById('edit-book').value) || null,
+                chapter: parseInt(document.getElementById('edit-chapter').value) || null,
+                chapter_title: document.getElementById('edit-chapter-title').value,
+                section: parseInt(document.getElementById('edit-section').value) || null,
+                raeder_volume: document.getElementById('edit-raeder-volume').value,
+                raeder_page: parseInt(document.getElementById('edit-raeder-page').value) || null,
+                raeder_line_start: parseInt(document.getElementById('edit-raeder-line-start').value) || null,
+                raeder_line_end: parseInt(document.getElementById('edit-raeder-line-end').value) || null,
+                title_greek: document.getElementById('edit-title-greek').value,
+                body_greek: document.getElementById('edit-body-greek').value,
+                translation_title: document.getElementById('edit-translation-title').value,
+                translation_content: document.getElementById('edit-translation-content').value,
+                note1: document.getElementById('edit-note1').value,
+                note2: document.getElementById('edit-note2').value,
+                ingredient_ids: currentEntryIngredients.map(i => i.id),
+                editor_name: 'Collaborator'
+            };
+
+            try {
+                const url = id ? `/api/entries/${id}` : '/api/entries';
+                const resp = await fetch(url, {
+                    method: id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (resp.ok) {
+                    showToast(id ? 'Entry updated' : 'Entry created', 'success');
+                    closeModal('edit-modal');
+                    loadEntries();
+                }
+            } catch (err) {
+                showToast('Failed to save entry', 'error');
+            }
+        }
+
+        async function deleteEntry() {
+            const id = document.getElementById('edit-id').value;
+            if (!id || !confirm('Delete this entry?')) return;
+            try {
+                await fetch(`/api/entries/${id}`, { method: 'DELETE' });
+                showToast('Entry deleted', 'success');
+                closeModal('edit-modal');
+                loadEntries();
+            } catch (err) {
+                showToast('Failed to delete', 'error');
+            }
+        }
+
+        async function generateURN(id) {
+            try {
+                const resp = await fetch(`/api/generate-urn/${id}`, { method: 'POST' });
+                const data = await resp.json();
+                showToast('URNs generated', 'success');
+                loadEntries();
+            } catch (err) {
+                showToast('Failed to generate URNs', 'error');
+            }
+        }
+
+        // Authors
+        async function loadAuthors() {
+            try {
+                const resp = await fetch('/api/authors');
+                authors = await resp.json();
+                renderAuthors();
+            } catch (err) {
+                console.error('Error loading authors:', err);
+            }
+        }
+
+        function renderAuthors() {
+            const tbody = document.querySelector('#authors-table tbody');
+            tbody.innerHTML = authors.map(a => `
+                <tr>
+                    <td><strong>${a.name}</strong></td>
+                    <td class="greek">${a.name_greek || '-'}</td>
+                    <td>${a.sect || 'Unknown'}${!a.sect_certain ? ' <em>(uncertain)</em>' : ''}</td>
+                    <td>${a.floruit || '-'}</td>
+                    <td>${a.entry_count}</td>
+                    <td><button class="btn btn-small btn-outline" onclick="editAuthor(${a.id})">Edit</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function openNewAuthorModal() {
+            document.getElementById('author-modal-title').textContent = 'New Author';
+            document.getElementById('delete-author-btn').style.display = 'none';
+            document.getElementById('author-id').value = '';
+            ['name', 'name-greek', 'sect', 'floruit', 'tlg', 'notes'].forEach(f => {
+                const el = document.getElementById(`author-${f}`);
+                if (el) el.value = '';
+            });
+            document.getElementById('author-sect-certain').checked = true;
+            document.getElementById('author-modal').classList.add('active');
+        }
+
+        function editAuthor(id) {
+            const author = authors.find(a => a.id === id);
+            if (!author) return;
+            document.getElementById('author-modal-title').textContent = 'Edit Author';
+            document.getElementById('delete-author-btn').style.display = 'inline-flex';
+            document.getElementById('author-id').value = author.id;
+            document.getElementById('author-name').value = author.name || '';
+            document.getElementById('author-name-greek').value = author.name_greek || '';
+            document.getElementById('author-sect').value = author.sect || '';
+            document.getElementById('author-sect-certain').checked = author.sect_certain !== false;
+            document.getElementById('author-floruit').value = author.floruit || '';
+            document.getElementById('author-tlg').value = author.tlg_id || '';
+            document.getElementById('author-notes').value = author.notes || '';
+            document.getElementById('author-modal').classList.add('active');
+        }
+
+        async function saveAuthor() {
+            const id = document.getElementById('author-id').value;
+            const data = {
+                name: document.getElementById('author-name').value,
+                name_greek: document.getElementById('author-name-greek').value,
+                sect: document.getElementById('author-sect').value,
+                sect_certain: document.getElementById('author-sect-certain').checked,
+                floruit: document.getElementById('author-floruit').value,
+                tlg_id: document.getElementById('author-tlg').value,
+                notes: document.getElementById('author-notes').value
+            };
+            try {
+                await fetch(id ? `/api/authors/${id}` : '/api/authors', {
+                    method: id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                showToast('Author saved', 'success');
+                closeModal('author-modal');
+                loadAuthors();
+                loadFilters();
+            } catch (err) {
+                showToast('Failed to save author', 'error');
+            }
+        }
+
+        async function deleteAuthor() {
+            const id = document.getElementById('author-id').value;
+            if (!id || !confirm('Delete this author?')) return;
+            try {
+                await fetch(`/api/authors/${id}`, { method: 'DELETE' });
+                showToast('Author deleted', 'success');
+                closeModal('author-modal');
+                loadAuthors();
+                loadFilters();
+            } catch (err) {
+                showToast('Failed to delete', 'error');
+            }
+        }
+
+        // Ingredients
+        async function loadIngredients() {
+            const params = new URLSearchParams();
+            const cat = document.getElementById('ingredient-category-filter')?.value;
+            const search = document.getElementById('ingredient-search')?.value;
+            if (cat) params.append('category', cat);
+            if (search) params.append('search', search);
+            try {
+                const resp = await fetch(`/api/ingredients?${params}`);
+                ingredients = await resp.json();
+                renderIngredients();
+            } catch (err) {
+                console.error('Error loading ingredients:', err);
+            }
+        }
+
+        function renderIngredients() {
+            const tbody = document.querySelector('#ingredients-table tbody');
+            tbody.innerHTML = ingredients.map(i => `
+                <tr>
+                    <td class="greek">${i.name_greek}</td>
+                    <td>${i.name_latin || '-'}</td>
+                    <td>${i.name_english || '-'}</td>
+                    <td>${i.category || '-'}</td>
+                    <td>${i.dioscorides_ref || '-'}</td>
+                    <td><button class="btn btn-small btn-outline" onclick="editIngredient(${i.id})">Edit</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function openNewIngredientModal() {
+            document.getElementById('ingredient-modal-title').textContent = 'New Ingredient';
+            document.getElementById('delete-ingredient-btn').style.display = 'none';
+            document.getElementById('ingredient-id').value = '';
+            ['greek', 'latin', 'english', 'modern', 'category', 'subcategory', 'dioscorides', 'notes'].forEach(f => {
+                const el = document.getElementById(`ingredient-${f}`);
+                if (el) el.value = '';
+            });
+            document.getElementById('ingredient-modal').classList.add('active');
+        }
+
+        function editIngredient(id) {
+            const ing = ingredients.find(i => i.id === id);
+            if (!ing) return;
+            document.getElementById('ingredient-modal-title').textContent = 'Edit Ingredient';
+            document.getElementById('delete-ingredient-btn').style.display = 'inline-flex';
+            document.getElementById('ingredient-id').value = ing.id;
+            document.getElementById('ingredient-greek').value = ing.name_greek || '';
+            document.getElementById('ingredient-latin').value = ing.name_latin || '';
+            document.getElementById('ingredient-english').value = ing.name_english || '';
+            document.getElementById('ingredient-modern').value = ing.modern_id || '';
+            document.getElementById('ingredient-category').value = ing.category || '';
+            document.getElementById('ingredient-subcategory').value = ing.subcategory || '';
+            document.getElementById('ingredient-dioscorides').value = ing.dioscorides_ref || '';
+            document.getElementById('ingredient-notes').value = ing.notes || '';
+            document.getElementById('ingredient-modal').classList.add('active');
+        }
+
+        async function saveIngredient() {
+            const id = document.getElementById('ingredient-id').value;
+            const data = {
+                name_greek: document.getElementById('ingredient-greek').value,
+                name_latin: document.getElementById('ingredient-latin').value,
+                name_english: document.getElementById('ingredient-english').value,
+                modern_id: document.getElementById('ingredient-modern').value,
+                category: document.getElementById('ingredient-category').value,
+                subcategory: document.getElementById('ingredient-subcategory').value,
+                dioscorides_ref: document.getElementById('ingredient-dioscorides').value,
+                notes: document.getElementById('ingredient-notes').value
+            };
+            try {
+                await fetch(id ? `/api/ingredients/${id}` : '/api/ingredients', {
+                    method: id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                showToast('Ingredient saved', 'success');
+                closeModal('ingredient-modal');
+                loadIngredients();
+                loadFilters();
+            } catch (err) {
+                showToast('Failed to save ingredient', 'error');
+            }
+        }
+
+        async function deleteIngredient() {
+            const id = document.getElementById('ingredient-id').value;
+            if (!id || !confirm('Delete this ingredient?')) return;
+            try {
+                await fetch(`/api/ingredients/${id}`, { method: 'DELETE' });
+                showToast('Ingredient deleted', 'success');
+                closeModal('ingredient-modal');
+                loadIngredients();
+                loadFilters();
+            } catch (err) {
+                showToast('Failed to delete', 'error');
+            }
+        }
+
+        // Analytics
+        async function loadAnalytics() {
+            try {
+                const [analyticsResp, mapResp] = await Promise.all([
+                    fetch('/api/analytics'),
+                    fetch('/api/book-map')
+                ]);
+                const data = await analyticsResp.json();
+                const mapData = await mapResp.json();
+
+                document.getElementById('analytics-total-words').textContent = data.total_words.toLocaleString();
+                document.getElementById('analytics-total-entries').textContent = data.total_entries.toLocaleString();
+
+                Object.values(charts).forEach(c => c.destroy());
+                charts = {};
+
+                // Authors chart
+                const authorLabels = Object.keys(data.words_by_author);
+                const authorHeight = Math.max(320, authorLabels.length * 24);
+                document.getElementById('chart-authors').parentElement.style.height = `${authorHeight}px`;
+                charts.authors = new Chart(document.getElementById('chart-authors'), {
+                    type: 'bar',
+                    data: { labels: authorLabels, datasets: [{ data: authorLabels.map(l => data.words_by_author[l]), backgroundColor: '#1e3a5f' }] },
+                    options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+                });
+
+                // Sects chart
+                const sectLabels = Object.keys(data.words_by_sect);
+                charts.sects = new Chart(document.getElementById('chart-sects'), {
+                    type: 'doughnut',
+                    data: { labels: sectLabels, datasets: [{ data: sectLabels.map(l => data.words_by_sect[l]), backgroundColor: ['#40826d', '#1e3a5f', '#b8860b', '#c44536', '#5c4030'] }] },
+                    options: { plugins: { legend: { position: 'right' } } }
+                });
+
+                // Books chart
+                const bookLabels = Object.keys(data.words_by_book).sort((a, b) => parseInt(a.replace('Book ', '')) - parseInt(b.replace('Book ', '')));
+                charts.books = new Chart(document.getElementById('chart-books'), {
+                    type: 'bar',
+                    data: { labels: bookLabels, datasets: [{ data: bookLabels.map(l => data.words_by_book[l]), backgroundColor: '#b8860b' }] },
+                    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+
+                // Ingredients chart
+                const ingLabels = data.top_ingredients.slice(0, 10).map(i => i[0]);
+                charts.ingredients = new Chart(document.getElementById('chart-ingredients'), {
+                    type: 'bar',
+                    data: { labels: ingLabels, datasets: [{ data: data.top_ingredients.slice(0, 10).map(i => i[1]), backgroundColor: '#40826d' }] },
+                    options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+                });
+
+                // Word frequency
+                const maxFreq = data.top_greek_words[0]?.[1] || 1;
+                document.getElementById('word-freq-container').innerHTML = `
+                    <table class="data-table" style="box-shadow: none;">
+                        <thead><tr><th>Word</th><th>Count</th></tr></thead>
+                        <tbody>
+                            ${data.top_greek_words.slice(0, 30).map(([word, count]) => `
+                                <tr><td class="greek">${word}</td><td>${count}</td></tr>
+                            `).join('')}
+                        </tbody>
+                    </table>`;
+
+                renderBookMap(mapData);
+            } catch (err) {
+                showToast('Failed to load analytics', 'error');
+            }
+        }
+
+        // Import/Export
+        function exportCSV() { window.location.href = '/api/export'; }
+
+        async function importFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const resp = await fetch('/api/import', { method: 'POST', body: formData });
+                const data = await resp.json();
+                showToast(data.message || 'Import complete', resp.ok ? 'success' : 'error');
+                loadEntries();
+                loadFilters();
+            } catch (err) {
+                showToast('Import failed', 'error');
+            }
+        }
+
+        async function reindexLemmas() {
+            showToast('Reindexing...', 'info');
+            try {
+                const resp = await fetch('/api/reindex-lemmas', { method: 'POST' });
+                const data = await resp.json();
+                showToast(data.message, 'success');
+            } catch (err) {
+                showToast('Reindex failed', 'error');
+            }
+        }
+
+        async function generateAllURNs() {
+            try {
+                const resp = await fetch('/api/generate-all-urns', { method: 'POST' });
+                const data = await resp.json();
+                showToast(data.message, 'success');
+                loadEntries();
+            } catch (err) {
+                showToast('Failed to generate URNs', 'error');
+            }
+        }
+
+        async function clearDatabase(scope = 'entries') {
+            const scopeLabel = scope === 'all'
+                ? 'the entire database (entries, authors, ingredients, themes)'
+                : 'all entries';
+            const confirmation = prompt(`This will delete ${scopeLabel}. Type RESET to confirm.`);
+            if (confirmation !== 'RESET') {
+                showToast('Reset cancelled', 'info');
+                return;
+            }
+            try {
+                const resp = await fetch('/api/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ scope, confirm: 'RESET' })
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Reset failed');
+                showToast(data.message || 'Database cleared', 'success');
+                loadEntries();
+                loadFilters();
+            } catch (err) {
+                showToast(err.message || 'Reset failed', 'error');
+            }
+        }
+
+        function toggleAnalyticsFullscreen() {
+            const panel = document.getElementById('panel-analytics');
+            if (!panel) return;
+            const isFull = panel.classList.toggle('fullscreen');
+            document.body.classList.toggle('panel-fullscreen-active', isFull);
+            const btn = document.getElementById('analytics-fullscreen-btn');
+            if (btn) btn.textContent = isFull ? 'Restore' : 'Maximize';
+            scheduleChartResize();
+        }
+
+        function closeAnalyticsFullscreen() {
+            const panel = document.getElementById('panel-analytics');
+            if (!panel || !panel.classList.contains('fullscreen')) return;
+            panel.classList.remove('fullscreen');
+            document.body.classList.remove('panel-fullscreen-active');
+            const btn = document.getElementById('analytics-fullscreen-btn');
+            if (btn) btn.textContent = 'Maximize';
+            scheduleChartResize();
+        }
+
+        function scheduleChartResize() {
+            setTimeout(() => {
+                Object.values(charts || {}).forEach(chart => {
+                    if (chart && typeof chart.resize === 'function') chart.resize();
+                });
+                // book map is pure HTML; nothing to resize
+            }, 150);
+        }
+
+        function renderBookMap(data) {
+            const container = document.getElementById('book-map');
+            const legend = document.getElementById('book-map-legend');
+            if (!data?.books?.length) {
+                container.innerHTML = '<em style="color: var(--ink-light);">No data</em>';
+                legend.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = data.books.map(book => {
+                const chapters = book.chapters.map(ch => {
+                    const titleLine = ch.title ? `Title: ${ch.title}` : '';
+                    const transLine = ch.translation_title ? ` / ${ch.translation_title}` : '';
+                    const label = `Book ${book.book}, Chapter ${ch.chapter}\nSource: ${ch.source_author}\n${titleLine}${transLine}\nEntries: ${ch.entries}\nWords: ${ch.word_count.toLocaleString()}`;
+                    return `<div class="chapter-block" title="${label}" style="background:${ch.color}"></div>`;
+                }).join('');
+                return `
+                    <div class="book-row">
+                        <div class="book-label">Book ${book.book}</div>
+                        <div class="chapter-strip">${chapters}</div>
+                    </div>
+                `;
+            }).join('');
+
+            const colorEntries = Object.entries(data.colors || {});
+            legend.innerHTML = colorEntries.map(([name, color]) => `
+                <span class="legend-item"><span class="legend-swatch" style="background:${color}"></span>${name}</span>
+            `).join('');
+        }
+
+        // Utils
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('active');
+            if (id === 'view-modal') viewingEntryId = null;
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // Structure Panel Functions
+        let thematicData = null;
+        let expandedNodes = new Set();  // Track which nodes are expanded
+
+        async function seedThematicData() {
+            try {
+                const response = await fetch('/api/seed-thematic', { method: 'POST' });
+                const data = await response.json();
+                showToast(data.message, 'success');
+                loadThematicMap();
+            } catch (error) {
+                console.error('Error seeding thematic data:', error);
+                showToast('Failed to seed thematic data', 'error');
+            }
+        }
+
+        async function loadThematicMap() {
+            const mode = document.querySelector('input[name="structure-mode"]:checked').value;
+            try {
+                const response = await fetch(`/api/thematic-map?mode=${mode}`);
+                const data = await response.json();
+                thematicData = data;
+
+                // Expand root level by default
+                if (data.structure && data.structure.length > 0) {
+                    expandedNodes.add(data.structure[0].id);
+                }
+
+                renderThematicTree(data);
+            } catch (error) {
+                console.error('Error loading thematic map:', error);
+                showToast('Failed to load thematic structure', 'error');
+            }
+        }
+
+        function toggleNode(nodeId) {
+            if (expandedNodes.has(nodeId)) {
+                expandedNodes.delete(nodeId);
+            } else {
+                expandedNodes.add(nodeId);
+            }
+            renderThematicTree(thematicData);
+        }
+
+        function filterByDivision(booksStart, booksEnd) {
+            // Switch to Browse tab
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelector('[data-panel="browse"]').classList.add('active');
+            document.getElementById('panel-browse').classList.add('active');
+
+            // Apply filter
+            const bookFilter = document.getElementById('filter-book');
+            if (bookFilter && booksStart) {
+                // If single book, select it
+                if (booksStart === booksEnd) {
+                    bookFilter.value = booksStart;
+                } else {
+                    // For ranges, just set to first book (user can adjust)
+                    bookFilter.value = booksStart;
+                }
+                loadEntries();
+                showToast(`Filtered to Book ${booksStart}${booksEnd !== booksStart ? `-${booksEnd}` : ''}`, 'info');
+            }
+        }
+
+        function renderThematicTree(data) {
+            if (!data) return;
+
+            const container = document.getElementById('thematic-tree');
+            const legend = document.getElementById('structure-legend');
+
+            // Build legend from unique groups
+            const groups = new Set();
+            function collectGroups(node) {
+                Object.keys(node.group_counts || {}).forEach(g => groups.add(g));
+                (node.children || []).forEach(collectGroups);
+            }
+            data.structure.forEach(collectGroups);
+
+            const mode = data.mode || 'school';
+            const fallbackSchoolColors = {
+                'Galen': '#e41a1c',
+                'Pneumatist': '#377eb8',
+                'Methodist': '#4daf4a',
+                'Empiricist': '#984ea3',
+                'Dogmatist': '#ff7f00',
+                'Other': '#999999'
+            };
+
+            // Prefer server-provided colors to stay consistent with book map
+            let colors = data.colors || {};
+            if (mode === 'school' && Object.keys(colors).length === 0) {
+                colors = fallbackSchoolColors;
+            } else if (mode !== 'school' && Object.keys(colors).length === 0) {
+                // Fallback: assign deterministic colors if backend did not send any
+                const authorPalette = [
+                    '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33',
+                    '#a65628', '#f781bf', '#999999', '#66c2a5', '#fc8d62', '#8da0cb',
+                    '#e78ac3', '#a6d854', '#ffd92f', '#e5c494', '#b3b3b3', '#8dd3c7',
+                    '#bebada', '#fb8072', '#80b1d3', '#fdb462', '#b3de69', '#fccde5', '#d9d9d9'
+                ];
+                colors = {};
+                const sortedGroups = Array.from(groups).filter(g => g !== 'Unknown').sort();
+                sortedGroups.forEach((author, idx) => {
+                    colors[author] = authorPalette[idx % authorPalette.length];
+                });
+                colors['Unknown'] = '#999999';
+                colors['Other'] = '#999999';
+            }
+
+            Object.keys(colors || {}).forEach(g => groups.add(g));
+
+            legend.innerHTML = Array.from(groups).map(g => `
+                <span style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="width: 12px; height: 12px; border-radius: 3px; background: ${colors[g] || '#999'}"></span>
+                    <span style="font-size: 0.9rem;">${g}</span>
+                </span>
+            `).join('');
+
+            function renderNode(node, depth = 0) {
+                const indent = depth * 24;
+                const hasChildren = node.children && node.children.length > 0;
+                const isExpanded = expandedNodes.has(node.id);
+
+                // Calculate dominant group
+                const groupCounts = node.group_counts || {};
+                const total = Object.values(groupCounts).reduce((a, b) => a + b, 0);
+                const dominant = Object.entries(groupCounts).sort((a, b) => b[1] - a[1])[0];
+                const dominantColor = dominant ? (colors[dominant[0]] || '#999') : node.color;
+
+                // Create percentage bar
+                let barHtml = '';
+                if (total > 0) {
+                    const segments = Object.entries(groupCounts)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([group, count]) => {
+                            const pct = (count / total * 100).toFixed(1);
+                            return `<div style="width: ${pct}%; background: ${colors[group] || '#999'}; height: 100%;"
+                                         title="${group}: ${pct}%"></div>`;
+                        }).join('');
+                    barHtml = `<div style="display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 0.5rem;">${segments}</div>`;
+                }
+
+                const levelStyles = {
+                    'part': 'font-size: 1.25rem; font-weight: 700;',
+                    'division': 'font-size: 1.1rem; font-weight: 600;',
+                    'subdivision': 'font-weight: 500;',
+                    'section': 'font-size: 0.95rem;'
+                };
+
+                // Expand/collapse arrow
+                const arrow = hasChildren
+                    ? `<span style="margin-right: 0.5rem; cursor: pointer; user-select: none; transition: transform 0.2s;"
+                              onclick="event.stopPropagation(); toggleNode(${node.id})">
+                         ${isExpanded ? '▼' : '▶'}
+                       </span>`
+                    : '<span style="margin-right: 1.5rem;"></span>';
+
+                // Click handler for filtering
+                const clickHandler = node.books_start
+                    ? `onclick="filterByDivision(${node.books_start}, ${node.books_end})" style="cursor: pointer;"`
+                    : '';
+
+                const childrenHtml = hasChildren && isExpanded
+                    ? node.children.map(c => renderNode(c, depth + 1)).join('')
+                    : '';
+
+                return `
+                    <div style="margin-left: ${indent}px;">
+                        <div ${clickHandler}
+                             style="border-left: 4px solid ${node.color || dominantColor}; padding-left: 1rem; padding-top: 0.75rem; padding-bottom: 0.75rem; margin-bottom: 0.5rem; background: rgba(255,255,255,0.3); border-radius: 0 8px 8px 0; transition: all 0.2s ease;"
+                             onmouseover="this.style.background='rgba(255,255,255,0.6)'"
+                             onmouseout="this.style.background='rgba(255,255,255,0.3)'">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div style="flex: 1;">
+                                    ${arrow}
+                                    <span style="${levelStyles[node.level] || ''}">${node.numeral ? node.numeral + '. ' : ''}${node.title_english}</span>
+                                    ${node.title_latin ? `<span style="color: var(--ink-light); font-style: italic; margin-left: 0.5rem;">${node.title_latin}</span>` : ''}
+                                    ${node.books ? `<span style="color: var(--ink-light); font-size: 0.85rem; margin-left: 0.5rem;">[${node.books}]</span>` : ''}
+                                </div>
+                                <div style="text-align: right; font-size: 0.9rem; color: var(--ink-light); min-width: 120px;">
+                                    <div>${(node.word_count || 0).toLocaleString()} words</div>
+                                    <div>${node.entry_count || 0} entries</div>
+                                </div>
+                            </div>
+                            ${node.definition ? `<div style="font-size: 0.9rem; color: var(--ink-light); margin-top: 0.5rem; margin-left: 1.5rem;">${node.definition}</div>` : ''}
+                            ${barHtml ? `<div style="margin-left: 1.5rem;">${barHtml}</div>` : ''}
+                        </div>
+                        ${childrenHtml}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = data.structure.map(node => renderNode(node)).join('');
+        }
+    </script>
+</body>
+</html>

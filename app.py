@@ -501,6 +501,51 @@ def search_with_lemma(query, entries):
 def index():
     return render_template('index.html')
 
+
+@app.route('/debug-db')
+def debug_db():
+    """Diagnostic endpoint for database location and connectivity"""
+    uri = app.config['SQLALCHEMY_DATABASE_URI']
+    info = {
+        "sqlalchemy_uri": uri,
+        "driver": None,
+        "database_path": None,
+        "database_exists": None,
+        "database_size_bytes": None,
+        "database_writable": None,
+        "bundled_db_exists": None,
+        "bundled_db_size_bytes": None,
+        "tmp_dir": tempfile.gettempdir(),
+        "connection_test": "pending"
+    }
+
+    try:
+        url = make_url(uri)
+        info["driver"] = url.drivername
+        if url.drivername.startswith('sqlite'):
+            db_path = url.database or ''
+            info["database_path"] = db_path
+            info["database_exists"] = os.path.exists(db_path)
+            info["database_size_bytes"] = os.path.getsize(db_path) if os.path.exists(db_path) else 0
+            info["database_writable"] = os.access(db_path, os.W_OK) if os.path.exists(db_path) else False
+        else:
+            info["database_path"] = url.database
+    except Exception as exc:
+        info["driver"] = f"parse_error: {exc}"
+        info["database_path"] = "unknown"
+
+    bundled_db = os.path.join(BASE_DIR, 'oribasius.db')
+    info["bundled_db_exists"] = os.path.exists(bundled_db)
+    info["bundled_db_size_bytes"] = os.path.getsize(bundled_db) if os.path.exists(bundled_db) else 0
+
+    try:
+        count = Entry.query.count()
+        info["connection_test"] = f"success: {count} entries"
+    except Exception as exc:
+        info["connection_test"] = f"failed: {exc}"
+
+    return jsonify(info)
+
 # =============================================================================
 # URN RESOLVER
 # =============================================================================

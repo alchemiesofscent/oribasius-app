@@ -2,12 +2,14 @@ __pycache__/
 *.py[cod]
 *.sqlite3
 *.db
+!oribasius.db
 instance/
 venv/
 .env
 .DS_Store
 .pytest_cache/
 *.log
+*:Zone.Identifier
 
 # VSCode/IDE
 .vscode/

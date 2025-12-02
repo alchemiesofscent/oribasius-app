@@ -27,6 +27,18 @@ A collaborative web application for editing, analyzing, and linking ancient Gree
 - **Edit history**: Track all changes with editor attribution
 - **Notes system**: Four note fields per entry for scholarly apparatus
 
+## Demo / Prototype Mode (shareable, no data saved)
+
+To let colleagues explore your current database for free, with edits that *appear* to work but do **not** persist:
+
+1) Ensure your sqlite file (`oribasius.db`) has the data you want to show.  
+2) Set env vars when running:  
+   - `DATABASE_URL=sqlite:///oribasius.db` (or point to your bundled sqlite path)  
+   - `DEMO_MODE=true` (commit calls flush for IDs then roll back; nothing is saved)  
+3) Start normally (e.g., `gunicorn app:app`). Users can add/edit/delete; after each request, changes are discarded.  
+
+For a quick free share, deploy to Render/Railway with those env vars and upload your sqlite file. Data resets on redeploy. For persistent collaboration, switch to Postgres and set `DEMO_MODE=false`.
+
 ## Quick Start
 
 ### Local Development

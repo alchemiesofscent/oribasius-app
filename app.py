@@ -10,6 +10,7 @@ Enhanced with:
 - Custom URN scheme
 """
 
+import os
 from flask import Flask, render_template, request, jsonify, send_file, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -61,9 +62,11 @@ SCHOOL_COLORS = {
 }
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///oribasius.db'
+# Configurable DB URL; default to local sqlite file
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///oribasius.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
+app.config['DEMO_MODE'] = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
 
 CORS(app)
 db = SQLAlchemy(app)
@@ -1863,6 +1866,15 @@ def init_db():
 
 
 init_db()
+
+# Demo mode: allow users to “edit” but discard changes (no persistence)
+if app.config['DEMO_MODE']:
+    real_commit = db.session.commit
+
+    def demo_commit():
+        db.session.flush()  # ensure IDs are assigned for responses
+        db.session.rollback()
+    db.session.commit = demo_commit
 
 
 if __name__ == '__main__':

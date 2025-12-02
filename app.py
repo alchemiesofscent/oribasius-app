@@ -84,6 +84,7 @@ def get_database_uri():
 
         target_path = url.database or fallback_path
         dir_path = os.path.dirname(target_path) or '.'
+        bundled_size = os.path.getsize(base_db) if os.path.exists(base_db) else 0
 
         # If target dir not writable (e.g., render read-only source), copy to /tmp
         if not os.access(dir_path, os.W_OK):
@@ -99,6 +100,12 @@ def get_database_uri():
         if target_path and not os.path.exists(target_path) and os.path.exists(base_db):
             os.makedirs(os.path.dirname(target_path), exist_ok=True)
             shutil.copy2(base_db, target_path)
+        # If target exists but looks smaller than bundled db, refresh it
+        elif target_path and os.path.exists(target_path) and bundled_size and os.path.getsize(target_path) < bundled_size:
+            try:
+                shutil.copy2(base_db, target_path)
+            except Exception:
+                pass
 
         return str(url)
 

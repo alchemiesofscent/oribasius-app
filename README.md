@@ -32,8 +32,8 @@ A collaborative web application for editing, analyzing, and linking ancient Gree
 To let colleagues explore your current database for free, with edits that *appear* to work but do **not** persist:
 
 1) Ensure your sqlite file (`oribasius.db`) has the data you want to show.  
-2) Set env vars when running:  
-   - `DATABASE_URL=sqlite:////opt/render/project/src/oribasius.db` on Render (use an absolute path); locally you can use `sqlite:///oribasius.db`.  
+2) Set env vars when running (app will auto-copy sqlite to a writable `/tmp` if needed):  
+   - Optional `DATABASE_URL` for sqlite/postgres. For sqlite, absolute paths work; if the path is read-only (Render source), the app copies the bundled db to `/tmp`.  
    - `DEMO_MODE=true` (commit calls flush for IDs then roll back; nothing is saved)  
 3) Start normally (e.g., `gunicorn app:app`). Users can add/edit/delete; after each request, changes are discarded.  
 

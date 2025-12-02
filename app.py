@@ -11,7 +11,10 @@ Enhanced with:
 """
 
 import os
+import shutil
+import tempfile
 from flask import Flask, render_template, request, jsonify, send_file, redirect
+from sqlalchemy.engine.url import make_url
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from sqlalchemy import inspect, text
@@ -62,10 +65,53 @@ SCHOOL_COLORS = {
 }
 
 app = Flask(__name__)
-# Configurable DB URL; default to bundled sqlite file (absolute path for deploys)
+# Configurable DB URL; default to bundled sqlite file copied to a writable path for deploys
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-default_sqlite = f"sqlite:///{os.path.join(BASE_DIR, 'oribasius.db')}"
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or default_sqlite
+
+def get_database_uri():
+    env_uri = os.environ.get('DATABASE_URL')
+    base_db = os.path.join(BASE_DIR, 'oribasius.db')
+
+    def prepare_sqlite_uri(uri, fallback_path):
+        try:
+            url = make_url(uri)
+        except Exception:
+            return uri
+
+        if not url.drivername.startswith('sqlite'):
+            return uri
+
+        target_path = url.database or fallback_path
+        dir_path = os.path.dirname(target_path) or '.'
+
+        # If target dir not writable (e.g., render read-only source), copy to /tmp
+        if not os.access(dir_path, os.W_OK):
+            tmp_path = os.path.join(tempfile.gettempdir(), 'oribasius.db')
+            if os.path.exists(base_db):
+                shutil.copy2(base_db, tmp_path)
+            elif target_path and os.path.exists(target_path):
+                shutil.copy2(target_path, tmp_path)
+            url = url.set(database=tmp_path)
+            return str(url)
+
+        # If target path missing but base db exists, seed it
+        if target_path and not os.path.exists(target_path) and os.path.exists(base_db):
+            os.makedirs(os.path.dirname(target_path), exist_ok=True)
+            shutil.copy2(base_db, target_path)
+
+        return str(url)
+
+    if env_uri:
+        return prepare_sqlite_uri(env_uri, base_db)
+
+    # Default: copy bundled db to /tmp for writable runtime
+    tmp_db = os.path.join(tempfile.gettempdir(), 'oribasius.db')
+    if os.path.exists(base_db):
+        shutil.copy2(base_db, tmp_db)
+        return f"sqlite:///{tmp_db}"
+    return f"sqlite:///{base_db}"
+
+app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
 app.config['DEMO_MODE'] = os.environ.get('DEMO_MODE', 'false').lower() == 'true'

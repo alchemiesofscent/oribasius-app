@@ -1177,6 +1177,21 @@ def get_thematic_map():
                         # No chapter range specified, just book range
                         matching_divs.append(div)
 
+        # If multiple sibling sections (no chapter ranges) match the same parent, aggregate to the parent.
+        if matching_divs:
+            siblings_by_parent = defaultdict(list)
+            for div in matching_divs:
+                if div.parent_id and div.chapter_start is None and div.chapter_end is None:
+                    siblings_by_parent[div.parent_id].append(div)
+            parent_choice = None
+            for pid, sibs in siblings_by_parent.items():
+                if len(sibs) > 1:
+                    parent_choice = next((d for d in divisions if d.id == pid), None)
+                    break
+            if parent_choice:
+                division_entries[parent_choice.id].append(entry)
+                continue
+
         # Filter to only the most specific (those with no children that also match)
         if matching_divs:
             # Sort by specificity (chapter range > book range, smaller = more specific)
@@ -1190,8 +1205,21 @@ def get_thematic_map():
             # Use the most specific division (single assignment to avoid double counting)
             matching_divs.sort(key=specificity_key)
 
+            # Handle ties where multiple siblings cover the same book without chapter ranges:
+            # assign to their parent so the parent aggregate shows counts instead of the first child.
+            best_key = specificity_key(matching_divs[0])
+            tied = [d for d in matching_divs if specificity_key(d) == best_key]
+
             best_div = None
+            if len(tied) > 1 and all(d.chapter_start is None for d in tied):
+                parent_id = tied[0].parent_id
+                if parent_id and all(d.parent_id == parent_id for d in tied):
+                    best_div = next((d for d in divisions if d.id == parent_id), None)
+
             for div in matching_divs:
+                if best_div and div.id == best_div.id:
+                    break
+
                 # Only add if this division has no children that also match
                 has_matching_children = False
                 for child_id in division_children.get(div.id, []):
